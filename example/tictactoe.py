@@ -60,6 +60,11 @@ class Player:
         self.id = id_
 
     def play(self, board):
+        raise NotImplementedError("Player.play")
+
+
+class UserPlayer(Player):
+    def play(self, board):
         print(board)
         pos = int(input("?: "))
         return Move(self.id, pos)
@@ -113,8 +118,8 @@ class Game:
 
 @click.command()
 def main():
-    p1 = Player(1)
-    p2 = Player(2)
+    p1 = UserPlayer(1)
+    p2 = UserPlayer(2)
     game = Game(p1, p2)
     game.start()
 
