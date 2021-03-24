@@ -70,6 +70,11 @@ class UserPlayer(Player):
         return Move(self.id, pos)
 
 
+class PerfectPlayer(Player):
+    def play(self, board):
+        pass
+
+
 class Game:
     def __init__(self, p1, p2):
         self.board = Board()
