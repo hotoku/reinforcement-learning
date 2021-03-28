@@ -4,7 +4,8 @@ import logging
 import click
 import collections
 from io import StringIO
-
+import pickle
+import itertools as it
 
 LOGGER = logging.getLogger(__file__)
 
@@ -52,7 +53,10 @@ class Board:
         return [self.buf[i][i] for i in range(3)]
 
     def diag2(self, i):
-        return [self.buf[i][2-i] for i in range(3)]
+        return [self.buf[i][2 - i] for i in range(3)]
+
+    def to_str(self):
+        return tuple(self.buf[0]) + tuple(self.buf[1]) + tuple(self.buf[2])
 
 
 class Player:
@@ -71,8 +75,21 @@ class UserPlayer(Player):
 
 
 class PerfectPlayer(Player):
+    def __init__(self, id_, first):
+        super(PerfectPlayer, self).__init__(id_)
+        with open("ttt.pickle", "rb") as f:
+            self.dic = pickle.load(f)
+            self.first = first
+
     def play(self, board):
-        pass
+        vs = []
+        for i, j in it.product(range(3), range(3)):
+            if board.get(i, j) == 0:
+                vs.append((self.dic[board.to_str()], (i, j)))
+        vs2 = sorted(vs, key=lambda x: x[0], reverse=self.first)
+        i, j = vs2[0][1]
+        pos = i * 3 + j
+        return Move(self.id, pos)
 
 
 class Game:
@@ -88,7 +105,10 @@ class Game:
             self.board.receive(move)
             finish, winner = self.judge()
             if finish:
-                print(f"{winner.id} wan")
+                if winner:
+                    print(f"{winner.id} wan")
+                else:
+                    print("draw")
                 break
             self.current = (self.current + 1) % len(self.players)
 
@@ -97,7 +117,7 @@ class Game:
             if self.win(p):
                 return True, p
         if self.draw():
-            return True, -1
+            return True, None
         return False, None
 
     def win(self, player):
@@ -123,7 +143,7 @@ class Game:
 
 @click.command()
 def main():
-    p1 = UserPlayer(1)
+    p1 = PerfectPlayer(1, True)
     p2 = UserPlayer(2)
     game = Game(p1, p2)
     game.start()

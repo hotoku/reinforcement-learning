@@ -6,8 +6,10 @@
 
 import itertools as it
 import logging
-import click
 import pickle
+
+import click
+
 
 LOGGER = logging.getLogger(__file__)
 
@@ -40,7 +42,7 @@ def win(board, player):
 
     for j in range(3):
         c = col(board, j)
-        if len(set(r)) == 1 and c[0] == player:
+        if len(set(c)) == 1 and c[0] == player:
             return True
 
     if len(set(diag1(board))) == 1 and board[0][0] == player:
@@ -60,29 +62,28 @@ def value(board):
     return 0
 
 
-def dfs(depth, board, ret):
+def dfs(depth, player, board, ret):
+    print(depth, to_str(board))
     key = to_str(board)
     if key in ret:
         return ret[key]
-    if depth == 10:
-        v = value(board)
+
+    v = value(board)
+    if depth == 9 or v != 0:
         ret[key] = v
         return v
+
     values = []
-    player = 1 if depth % 2 == 1 else 2
     for i, j in it.product(range(3), range(3)):
-        import pdb
-        pdb.set_trace()
         if board[i][j] == 0:
             board[i][j] = player
-            values.append(dfs(depth + 1, board, ret))
+            values.append(dfs(depth + 1, 1 if player == 2 else 2,  board, ret))
             board[i][j] = 0
     if player == 1:
         ret[key] = max(values)
     else:
         ret[key] = min(values)
     return ret[key]
-#!/usr/bin/env python
 
 
 @click.command()
@@ -93,8 +94,9 @@ def main():
         [0, 0, 0],
         [0, 0, 0]
     ]
-    dfs(0, board, ret)
+    dfs(0, 1, board, ret)
     pickle.dump(ret, open("ttt.pickle", "wb"))
+    print(ret)
 
 
 if __name__ == "__main__":
