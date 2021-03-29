@@ -31,7 +31,7 @@ def diag1(board):
 
 
 def diag2(board):
-    return [board[i][2-i] for i in range(3)]
+    return [board[i][2 - i] for i in range(3)]
 
 
 def win(board, player):
@@ -54,22 +54,27 @@ def win(board, player):
     return False
 
 
-def value(board):
-    if win(board, 1):
-        return 1
-    if win(board, 2):
-        return -1
-    return 0
-
-
 def dfs(depth, player, board, ret):
     print(depth, to_str(board))
     key = to_str(board)
     if key in ret:
         return ret[key]
 
-    v = value(board)
-    if depth == 9 or v != 0:
+    if win(board, player):
+        if player == 1:
+            v = 1
+        else:
+            v = -1
+        ret[key] = v
+        return v
+
+    if depth == 9:
+        if win(board, 1):
+            v = 1
+        elif win(board, 2):
+            v = -1
+        else:
+            v = 0
         ret[key] = v
         return v
 
@@ -77,7 +82,8 @@ def dfs(depth, player, board, ret):
     for i, j in it.product(range(3), range(3)):
         if board[i][j] == 0:
             board[i][j] = player
-            values.append(dfs(depth + 1, 1 if player == 2 else 2,  board, ret))
+            values.append(dfs(depth + 1, 1 if player == 2 else 2,
+                              board, ret))
             board[i][j] = 0
     if player == 1:
         ret[key] = max(values)

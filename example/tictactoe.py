@@ -58,6 +58,9 @@ class Board:
     def to_str(self):
         return tuple(self.buf[0]) + tuple(self.buf[1]) + tuple(self.buf[2])
 
+    def __getitem__(self, i):
+        return self.row(i)
+
 
 class Player:
     def __init__(self, id_):
@@ -85,7 +88,9 @@ class PerfectPlayer(Player):
         vs = []
         for i, j in it.product(range(3), range(3)):
             if board.get(i, j) == 0:
+                board[i][j] = self.id
                 vs.append((self.dic[board.to_str()], (i, j)))
+                board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=self.first)
         i, j = vs2[0][1]
         pos = i * 3 + j
@@ -122,14 +127,18 @@ class Game:
 
     def win(self, player):
         for i in range(3):
-            if len(set(self.board.row(i))) == 1 and self.board.row(i)[0] == player.id:
+            if (len(set(self.board.row(i))) == 1 and
+                    self.board.row(i)[0] == player.id):
                 return True
         for i in range(3):
-            if len(set(self.board.col(i))) == 1 and self.board.col(i)[0] == player.id:
+            if (len(set(self.board.col(i))) == 1 and
+                    self.board.col(i)[0] == player.id):
                 return True
-        if len(set(self.board.diag1(i))) == 1 and self.board.diag1(i)[0] == player.id:
+        if (len(set(self.board.diag1(i))) == 1 and
+                self.board.diag1(i)[0] == player.id):
             return True
-        if len(set(self.board.diag2(i))) == 1 and self.board.diag2(i)[0] == player.id:
+        if (len(set(self.board.diag2(i))) == 1
+                and self.board.diag2(i)[0] == player.id):
             return True
         return False
 
