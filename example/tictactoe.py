@@ -125,6 +125,12 @@ class Game:
             return True, None
         return False, None
 
+    def next(self):
+        p = self.players[self.current]
+        move = p.play(self.board)
+        self.board.receive(move)
+        self.current = (self.current + 1) % len(self.players)
+
     def win(self, player):
         for i in range(3):
             if (len(set(self.board.row(i))) == 1 and
@@ -143,11 +149,32 @@ class Game:
         return False
 
     def draw(self):
+        for p in self.players:
+            if self.win(p):
+                return False
+
         for i in range(3):
             for j in range(3):
                 if self.board.get(i, j) == 0:
                     return False
         return True
+
+    def finished(self):
+        for p in self.players:
+            if self.win(p):
+                return True
+        if self.draw():
+            return True
+        return False
+
+
+class Processor:
+    def __init__(self, game):
+        self.game = game
+
+    def play(self):
+        while not self.game.finished():
+            self.game.next()
 
 
 @click.command()
@@ -155,7 +182,8 @@ def main():
     p1 = PerfectPlayer(1, True)
     p2 = UserPlayer(2)
     game = Game(p1, p2)
-    game.start()
+    proc = Processor(game)
+    proc.play()
 
 
 if __name__ == "__main__":
