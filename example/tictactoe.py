@@ -98,32 +98,13 @@ class PerfectPlayer(Player):
 
 
 class Game:
+    class NotFinished(Exception):
+        pass
+
     def __init__(self, p1, p2):
         self.board = Board()
         self.players = [p1, p2]
         self.current = 0
-
-    def start(self):
-        while True:
-            p = self.players[self.current]
-            move = p.play(self.board)
-            self.board.receive(move)
-            finish, winner = self.judge()
-            if finish:
-                if winner:
-                    print(f"{winner.id} wan")
-                else:
-                    print("draw")
-                break
-            self.current = (self.current + 1) % len(self.players)
-
-    def judge(self):
-        for p in self.players:
-            if self.win(p):
-                return True, p
-        if self.draw():
-            return True, None
-        return False, None
 
     def next(self):
         p = self.players[self.current]
@@ -167,6 +148,14 @@ class Game:
             return True
         return False
 
+    def result(self):
+        if not self.finished():
+            raise Game.NotFinished()
+        for p in self.players:
+            if self.win(p):
+                return p.id
+        return 0
+
 
 class Processor:
     def __init__(self, game):
@@ -175,6 +164,11 @@ class Processor:
     def play(self):
         while not self.game.finished():
             self.game.next()
+        ret = self.game.result()
+        if ret == 0:
+            print("draw")
+        else:
+            print(f"{ret} win")
 
 
 @click.command()
