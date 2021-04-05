@@ -137,8 +137,8 @@ class Game:
         if (len(set(self.board.diag1(i))) == 1 and
                 self.board.diag1(i)[0] == player.id):
             return True
-        if (len(set(self.board.diag2(i))) == 1
-                and self.board.diag2(i)[0] == player.id):
+        if (len(set(self.board.diag2(i))) == 1 and
+                self.board.diag2(i)[0] == player.id):
             return True
         return False
 
