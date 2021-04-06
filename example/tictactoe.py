@@ -12,6 +12,16 @@ LOGGER = logging.getLogger(__file__)
 Move = collections.namedtuple("Move", "id,pos")
 
 
+def pos2ij(pos):
+    i = pos // 3
+    j = pos % 3
+    return i, j
+
+
+def ij2pos(i, j):
+    return i * 3 + j
+
+
 class Board:
     def __init__(self):
         self.buf = [
@@ -21,8 +31,7 @@ class Board:
         ]
 
     def receive(self, move):
-        i = move.pos // 3
-        j = move.pos % 3
+        i, j = pos2ij(move.pos)
         self.buf[i][j] = move.id
 
     def __str__(self):
@@ -30,7 +39,7 @@ class Board:
         for i in range(3):
             for j in range(3):
                 if self.buf[i][j] == 0:
-                    sio.write(str(i * 3 + j))
+                    sio.write(str(ij2pos(i, j)))
                 elif self.buf[i][j] == 1:
                     sio.write("o")
                 elif self.buf[i][j] == 2:
@@ -119,7 +128,7 @@ class PerfectPlayer(Player):
                 board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=self.first)
         i, j = vs2[0][1]
-        pos = i * 3 + j
+        pos = ij2pos(i, j)
         return Move(self.id, pos)
 
 
@@ -170,7 +179,7 @@ class LearningPlayer(Player):
                 board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
         i, j = vs2[0][1]
-        pos = i * 3 + j
+        pos = ij2pos(i, j)
         ret = board.clone()
         ret[i][j] = self.id
         self.history.append(ret)
