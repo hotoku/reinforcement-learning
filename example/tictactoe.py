@@ -97,6 +97,59 @@ class PerfectPlayer(Player):
         return Move(self.id, pos)
 
 
+class Rule:
+    @staticmethod
+    def win(board, pid):
+        for i in range(3):
+            if (len(set(board.row(i))) == 1 and
+                    board.row(i)[0] == pid):
+                return True
+        for i in range(3):
+            if (len(set(board.col(i))) == 1 and
+                    board.col(i)[0] == pid):
+                return True
+        if (len(set(board.diag1(i))) == 1 and
+                board.diag1(i)[0] == pid):
+            return True
+        if (len(set(board.diag2(i))) == 1 and
+                board.diag2(i)[0] == pid):
+            return True
+        return False
+
+    @staticmethod
+    def draw(board):
+        for p in [1, 2]:
+            if Rule.win(p):
+                return False
+
+        for i, j in it.product(range(3), range(3)):
+            if board.get(i, j) == 0:
+                return False
+        return True
+
+
+class LearningPlayer(Player):
+    def __init__(self, id_, first):
+        super(LearningPlayer, self).__init__(id_)
+        self.enemy = 1 if self.id == 1 else 2
+        self.dic = {}
+        self.first = first
+        self.init_dic()
+
+    def init_dic(self):
+        board = Board()
+
+        def dfs(depth):
+            if depth == 10:
+                return
+            if Rule.win(board, self.id):
+                self.dic[str(board)] = 1
+            elif Rule.win(board, self.enemy):
+                self.dic[str(board)] = -1
+            else:
+                self.dic[str(board)] = 0.5
+
+
 class Game:
     class NotFinished(Exception):
         pass
@@ -111,34 +164,6 @@ class Game:
         move = p.play(self.board)
         self.board.receive(move)
         self.current = (self.current + 1) % len(self.players)
-
-    def win(self, player):
-        for i in range(3):
-            if (len(set(self.board.row(i))) == 1 and
-                    self.board.row(i)[0] == player.id):
-                return True
-        for i in range(3):
-            if (len(set(self.board.col(i))) == 1 and
-                    self.board.col(i)[0] == player.id):
-                return True
-        if (len(set(self.board.diag1(i))) == 1 and
-                self.board.diag1(i)[0] == player.id):
-            return True
-        if (len(set(self.board.diag2(i))) == 1 and
-                self.board.diag2(i)[0] == player.id):
-            return True
-        return False
-
-    def draw(self):
-        for p in self.players:
-            if self.win(p):
-                return False
-
-        for i in range(3):
-            for j in range(3):
-                if self.board.get(i, j) == 0:
-                    return False
-        return True
 
     def finished(self):
         for p in self.players:
