@@ -61,6 +61,26 @@ class Board:
     def __getitem__(self, i):
         return self.row(i)
 
+    def clone(self):
+        ret = Board()
+        for i, j in it.product(range(3), range(3)):
+            ret[i][j] = self[i][j]
+        return ret
+
+
+class Value:
+    def __init__(self):
+        self.dic = {}
+
+    def __getitem__(self, board):
+        return self.dic[board.to_str()]
+
+    def __setitem__(self, board, val):
+        self.dic[board.to_str()] = val
+
+    def __contains__(self, board):
+        return board.to_str() in self.dic
+
 
 class Player:
     def __init__(self, id_):
@@ -68,6 +88,12 @@ class Player:
 
     def play(self, board):
         raise NotImplementedError("Player.play")
+
+    def initialize(self):
+        pass
+
+    def finilize(self, result):
+        pass
 
 
 class UserPlayer(Player):
@@ -97,6 +123,60 @@ class PerfectPlayer(Player):
         return Move(self.id, pos)
 
 
+class LearningPlayer(Player):
+    def __init__(self, id_):
+        super(LearningPlayer, self).__init__(id_)
+        self.enemy = 1 if self.id == 1 else 2
+        self.value = Value()
+        self.init_value()
+        self.history = []
+
+    def init_value(self):
+        board = Board()
+
+        def dfs(depth):
+            if depth == 10:
+                return
+
+            if board in self.value:
+                return
+
+            if Rule.win(board, self.id):
+                self.value[board] = 1
+            elif Rule.win(board, self.enemy):
+                self.value[board] = -1
+            else:
+                self.value[board] = 0.5
+            for i, j in it.product(range(3), range(3)):
+                if board[i][j] == 0:
+                    pid = 1 if depth % 2 == 0 else 2
+                    board[i][j] = pid
+                    dfs(depth + 1)
+                    board[i][j] = 0
+        dfs(0)
+
+    def initialize(self):
+        self.history = []
+
+    def finilize(self, winner, board):
+        pass
+
+    def play(self, board):
+        vs = []
+        for i, j in it.product(range(3), range(3)):
+            if board.get(i, j) == 0:
+                board[i][j] = self.id
+                vs.append((self.value[board], (i, j)))
+                board[i][j] = 0
+        vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
+        i, j = vs2[0][1]
+        pos = i * 3 + j
+        ret = board.clone()
+        ret[i][j] = self.id
+        self.history.append(ret)
+        return Move(self.id, pos)
+
+
 class Rule:
     @staticmethod
     def win(board, pid):
@@ -119,35 +199,13 @@ class Rule:
     @staticmethod
     def draw(board):
         for p in [1, 2]:
-            if Rule.win(p):
+            if Rule.win(board, p):
                 return False
 
         for i, j in it.product(range(3), range(3)):
             if board.get(i, j) == 0:
                 return False
         return True
-
-
-class LearningPlayer(Player):
-    def __init__(self, id_, first):
-        super(LearningPlayer, self).__init__(id_)
-        self.enemy = 1 if self.id == 1 else 2
-        self.dic = {}
-        self.first = first
-        self.init_dic()
-
-    def init_dic(self):
-        board = Board()
-
-        def dfs(depth):
-            if depth == 10:
-                return
-            if Rule.win(board, self.id):
-                self.dic[str(board)] = 1
-            elif Rule.win(board, self.enemy):
-                self.dic[str(board)] = -1
-            else:
-                self.dic[str(board)] = 0.5
 
 
 class Game:
@@ -167,9 +225,9 @@ class Game:
 
     def finished(self):
         for p in self.players:
-            if self.win(p):
+            if Rule.win(self.board, p.id):
                 return True
-        if self.draw():
+        if Rule.draw(self.board):
             return True
         return False
 
@@ -177,7 +235,7 @@ class Game:
         if not self.finished():
             raise Game.NotFinished()
         for p in self.players:
-            if self.win(p):
+            if Rule.win(self.board, p.id):
                 return p.id
         return 0
 
@@ -198,7 +256,7 @@ class Processor:
 
 @click.command()
 def main():
-    p1 = PerfectPlayer(1, True)
+    p1 = LearningPlayer(1)
     p2 = UserPlayer(2)
     game = Game(p1, p2)
     proc = Processor(game)
