@@ -6,6 +6,7 @@ import collections
 from io import StringIO
 import pickle
 import itertools as it
+import numpy as np
 
 LOGGER = logging.getLogger(__file__)
 
@@ -31,6 +32,9 @@ class Board:
         ]
 
     def receive(self, move):
+        if move is None:
+            __import__("pdb").set_trace()
+
         i, j = pos2ij(move.pos)
         self.buf[i][j] = move.id
 
@@ -115,6 +119,28 @@ class UserPlayer(Player):
         return Move(self.id, pos)
 
 
+class OrderPlayer(Player):
+    def play(self, board):
+        for i, j in it.product(range(3), range(3)):
+            if board[i][j] == 0:
+                return Move(self.id, ij2pos(i, j))
+        raise ValueError("no position is left")
+
+
+class RandomPlayer(Player):
+    def play(self, board):
+        pos = []
+        for i, j in it.product(range(3), range(3)):
+            if board[i][j] == 0:
+                pos.append((i, j))
+        if len(pos) == 0:
+            raise ValueError("no position is left")
+        indices = np.arange(len(pos))
+        index = np.random.choice(indices)
+        i, j = pos[index]
+        return Move(self.id, ij2pos(i, j))
+
+
 class PerfectPlayer(Player):
     def __init__(self, id_, first):
         super(PerfectPlayer, self).__init__(id_)
@@ -158,7 +184,7 @@ class LearningPlayer(Player):
             elif Rule.win(board, self.enemy):
                 self.value[board] = -1
             else:
-                self.value[board] = 0.5
+                self.value[board] = 0
             for i, j in it.product(range(3), range(3)):
                 if board[i][j] == 0:
                     pid = 1 if depth % 2 == 0 else 2
@@ -192,7 +218,13 @@ class LearningPlayer(Player):
                 vs.append((self.value[board], (i, j)))
                 board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
-        i, j = vs2[0][1]
+        prob = 0.9
+        if np.random.uniform() < prob:
+            index = 0
+        else:
+            indices = np.arange(len(vs2))
+            index = np.random.choice(indices)
+        i, j = vs2[index][1]
         pos = ij2pos(i, j)
         ret = board.clone()
         ret[i][j] = self.id
@@ -240,6 +272,9 @@ class Game:
         self.players = [p1, p2]
         self.current = 0
 
+    def reset(self):
+        self.board = Board()
+
     def next(self):
         p = self.players[self.current]
         move = p.play(self.board)
@@ -266,8 +301,11 @@ class Game:
 class Processor:
     def __init__(self, game):
         self.game = game
+        self.round = 0
+        self.history = np.zeros(100)
 
     def play(self):
+        self.game.reset()
         for p in self.game.players:
             p.initialize()
         while not self.game.finished():
@@ -279,15 +317,24 @@ class Processor:
             print("draw")
         else:
             print(f"{ret} win")
+        return ret
+
+    def run(self):
+        while True:
+            ret = self.play()
+            self.history[self.round % len(self.history)] = 1 if ret == 1 else 0
+            self.round += 1
+            print(self.round, sum(self.history) / len(self.history))
 
 
 @click.command()
 def main():
     p1 = LearningPlayer(1)
-    p2 = UserPlayer(2)
+    # p2 = OrderPlayer(2)
+    p2 = RandomPlayer(2)
     game = Game(p1, p2)
     proc = Processor(game)
-    proc.play()
+    proc.run()
 
 
 if __name__ == "__main__":
