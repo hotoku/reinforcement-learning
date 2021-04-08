@@ -109,7 +109,7 @@ class Player:
     def initialize(self):
         pass
 
-    def finilize(self, result, board):
+    def finalize(self, result, board):
         pass
 
 
@@ -169,6 +169,7 @@ class LearningPlayer(Player):
         self.value = Value()
         self.init_value()
         self.history = []
+        self.round = 0
 
     def init_value(self):
         board = Board()
@@ -197,8 +198,9 @@ class LearningPlayer(Player):
     def initialize(self):
         self.history = []
 
-    def finilize(self, winner, board):
-        alpha = 0.1
+    def finalize(self, winner, board):
+        self.round += 1
+        alpha = 0.3 * np.power(0.9, int(self.round / 2000))
         if not self.history[-1] == board:
             self.history.append(board)
         h2 = list(reversed(self.history))
@@ -219,7 +221,7 @@ class LearningPlayer(Player):
                 vs.append((self.value[board], (i, j)))
                 board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
-        prob = 0.9
+        prob = 0.95 if self.round < 20000 else 1
         if np.random.uniform() < prob:
             index = 0
         else:
@@ -269,12 +271,13 @@ class Game:
         pass
 
     def __init__(self, p1, p2):
-        self.board = Board()
         self.players = [p1, p2]
+        self.board = Board()
         self.current = 0
 
     def reset(self):
         self.board = Board()
+        self.current = 0
 
     def next(self):
         p = self.players[self.current]
@@ -303,7 +306,7 @@ class Processor:
     def __init__(self, game):
         self.game = game
         self.round = 0
-        self.history = np.zeros(100)
+        self.history = -np.ones(100)
 
     def play(self):
         self.game.reset()
@@ -315,7 +318,7 @@ class Processor:
             print(f"==\n{self.game.board}")
         ret = self.game.result()
         for p in self.game.players:
-            p.finilize(ret, self.game.board)
+            p.finalize(ret, self.game.board)
         if ret == 0:
             print("draw")
         else:
@@ -330,14 +333,19 @@ class Processor:
             win = sum(self.history == 1)
             lose = sum(self.history == 2)
             draw = sum(self.history == 0)
-            print(self.round, win, draw, lose)
+            print("report:", self.round, win, draw, lose)
 
 
 @click.command()
 def main():
+    # p1 = RandomPlayer(1)
     p1 = LearningPlayer(1)
+    # p1 = UserPlayer(1)
+    # p1 = PerfectPlayer(1, True)
     # p2 = OrderPlayer(2)
-    p2 = RandomPlayer(2)
+    # p2 = RandomPlayer(2)
+    # p2 = LearningPlayer(2)
+    p2 = PerfectPlayer(2, False)
     game = Game(p1, p2)
     proc = Processor(game)
     proc.run()
