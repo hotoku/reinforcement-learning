@@ -165,7 +165,7 @@ class PerfectPlayer(Player):
 class LearningPlayer(Player):
     def __init__(self, id_):
         super(LearningPlayer, self).__init__(id_)
-        self.enemy = 1 if self.id == 1 else 2
+        self.enemy = 1 if self.id == 2 else 1
         self.value = Value()
         self.init_value()
         self.history = []
@@ -175,6 +175,7 @@ class LearningPlayer(Player):
         board = Board()
 
         def dfs(depth):
+            # The depth always equals to the number of filled cells of the board.
             if depth == 10:
                 return
 
@@ -338,14 +339,14 @@ class Processor:
 
 @click.command()
 def main():
-    # p1 = RandomPlayer(1)
-    p1 = LearningPlayer(1)
+    p1 = RandomPlayer(1)
+    # p1 = LearningPlayer(1)
     # p1 = UserPlayer(1)
     # p1 = PerfectPlayer(1, True)
     # p2 = OrderPlayer(2)
     # p2 = RandomPlayer(2)
-    # p2 = LearningPlayer(2)
-    p2 = PerfectPlayer(2, False)
+    p2 = LearningPlayer(2)
+    # p2 = PerfectPlayer(2, False)
     game = Game(p1, p2)
     proc = Processor(game)
     proc.run()
