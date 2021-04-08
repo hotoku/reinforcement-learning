@@ -43,7 +43,8 @@ class Board:
         for i in range(3):
             for j in range(3):
                 if self.buf[i][j] == 0:
-                    sio.write(str(ij2pos(i, j)))
+                    # sio.write(str(ij2pos(i, j)))
+                    sio.write(".")
                 elif self.buf[i][j] == 1:
                     sio.write("o")
                 elif self.buf[i][j] == 2:
@@ -197,7 +198,7 @@ class LearningPlayer(Player):
         self.history = []
 
     def finilize(self, winner, board):
-        alpha = 0.05
+        alpha = 0.1
         if not self.history[-1] == board:
             self.history.append(board)
         h2 = list(reversed(self.history))
@@ -306,10 +307,12 @@ class Processor:
 
     def play(self):
         self.game.reset()
+        print(f"=====\n{self.game.board}")
         for p in self.game.players:
             p.initialize()
         while not self.game.finished():
             self.game.next()
+            print(f"==\n{self.game.board}")
         ret = self.game.result()
         for p in self.game.players:
             p.finilize(ret, self.game.board)
@@ -322,9 +325,12 @@ class Processor:
     def run(self):
         while True:
             ret = self.play()
-            self.history[self.round % len(self.history)] = 1 if ret == 1 else 0
+            self.history[self.round % len(self.history)] = ret
             self.round += 1
-            print(self.round, sum(self.history) / len(self.history))
+            win = sum(self.history == 1)
+            lose = sum(self.history == 2)
+            draw = sum(self.history == 0)
+            print(self.round, win, draw, lose)
 
 
 @click.command()
