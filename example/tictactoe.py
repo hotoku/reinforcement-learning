@@ -76,6 +76,9 @@ class Board:
             ret[i][j] = self[i][j]
         return ret
 
+    def __eq__(self, o):
+        return self.to_str() == o.to_str()
+
 
 class Value:
     def __init__(self):
@@ -101,7 +104,7 @@ class Player:
     def initialize(self):
         pass
 
-    def finilize(self, result):
+    def finilize(self, result, board):
         pass
 
 
@@ -168,7 +171,18 @@ class LearningPlayer(Player):
         self.history = []
 
     def finilize(self, winner, board):
-        pass
+        alpha = 0.05
+        if not self.history[-1] == board:
+            self.history.append(board)
+        h2 = list(reversed(self.history))
+        if winner == self.id:
+            self.value[board] = 1
+        elif winner == self.enemy:
+            self.value[board] = -1
+        else:
+            self.value[board] = 0
+        for b1, b2 in zip(h2[:-1], h2[1:]):
+            self.value[b2] += alpha * (self.value[b1] - self.value[b2])
 
     def play(self, board):
         vs = []
@@ -254,9 +268,13 @@ class Processor:
         self.game = game
 
     def play(self):
+        for p in self.game.players:
+            p.initialize()
         while not self.game.finished():
             self.game.next()
         ret = self.game.result()
+        for p in self.game.players:
+            p.finilize(ret, self.game.board)
         if ret == 0:
             print("draw")
         else:
