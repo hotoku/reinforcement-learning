@@ -229,10 +229,13 @@ class LearningPlayer(Player):
             indices = np.arange(len(vs2))
             index = np.random.choice(indices)
         i, j = vs2[index][1]
-        pos = ij2pos(i, j)
         ret = board.clone()
         ret[i][j] = self.id
+
+        self.history.append(board.clone())
         self.history.append(ret)
+
+        pos = ij2pos(i, j)
         return Move(self.id, pos)
 
 
