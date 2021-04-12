@@ -157,7 +157,10 @@ class PerfectPlayer(Player):
                 vs.append((self.dic[board.to_str()], (i, j)))
                 board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=self.first)
-        i, j = vs2[0][1]
+        indices = [i for i, v in enumerate(vs2) if v[0] == vs2[0][0]]
+        index = np.random.choice(indices)
+
+        i, j = vs2[index][1]
         pos = ij2pos(i, j)
         return Move(self.id, pos)
 
