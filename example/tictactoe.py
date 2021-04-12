@@ -202,15 +202,12 @@ class LearningPlayer(Player):
 
     def finalize(self, winner, board):
         self.round += 1
-        # alpha = 0.3 * np.power(0.9, int(self.round / 2000))
-        # alpha = 0.3
-        # alpha = 0.8 * (0.99 ** (self.round / 3000))
+        alpha = 0.3 * np.power(0.9, int(self.round / 2000))
         if not self.history[-1] == board:
             self.history.append(board)
         h2 = list(reversed(self.history))
         for b1, b2 in zip(h2[:-1], h2[1:]):
-            # self.value[b2] += alpha * (self.value[b1] - self.value[b2])
-            self.value[b2] = self.value[b1]
+            self.value[b2] += alpha * (self.value[b1] - self.value[b2])
 
     def play(self, board):
         vs = []
