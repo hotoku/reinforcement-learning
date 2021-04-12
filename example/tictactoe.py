@@ -165,7 +165,7 @@ class PerfectPlayer(Player):
 class LearningPlayer(Player):
     def __init__(self, id_, first):
         super(LearningPlayer, self).__init__(id_)
-        self.enemy = 1 if self.id == 2 else 1
+        self.enemy = 1 if self.id == 2 else 2
         self.value = Value()
         self.init_value()
         self.history = []
@@ -204,12 +204,13 @@ class LearningPlayer(Player):
         self.round += 1
         # alpha = 0.3 * np.power(0.9, int(self.round / 2000))
         # alpha = 0.3
-        alpha = 0.3 * (0.99 ** (self.round / 1000))
+        # alpha = 0.8 * (0.99 ** (self.round / 3000))
         if not self.history[-1] == board:
             self.history.append(board)
         h2 = list(reversed(self.history))
         for b1, b2 in zip(h2[:-1], h2[1:]):
-            self.value[b2] += alpha * (self.value[b1] - self.value[b2])
+            # self.value[b2] += alpha * (self.value[b1] - self.value[b2])
+            self.value[b2] = self.value[b1]
 
     def play(self, board):
         vs = []
@@ -218,8 +219,8 @@ class LearningPlayer(Player):
                 board[i][j] = self.id
                 vs.append((self.value[board], (i, j)))
                 board[i][j] = 0
-        vs2 = sorted(vs, key=lambda x: x[0], reverse=self.first)
-        prob = 0.95
+        vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
+        prob = 1
         if np.random.uniform() < prob:
             index = 0
         else:
@@ -342,6 +343,7 @@ def main():
     # p1 = RandomPlayer(1)
     p1 = LearningPlayer(1, True)
     # p1 = UserPlayer(1)
+    # p1 = OrderPlayer(1)
     # p1 = PerfectPlayer(1, True)
     # p2 = OrderPlayer(2)
     # p2 = RandomPlayer(2)
