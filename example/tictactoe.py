@@ -162,6 +162,20 @@ class PerfectPlayer(Player):
         return Move(self.id, pos)
 
 
+class ImperfectPlayer(Player):
+    def __init__(self, id_, first):
+        super(ImperfectPlayer, self).__init__(id_)
+        self.perfect = PerfectPlayer(id_, first)
+        self.random = RandomPlayer(id_)
+        self.enemy = 1 if self.id == 2 else 2
+
+    def play(self, board):
+        if board[2][2] == self.enemy:
+            return self.random.play(board)
+        else:
+            return self.perfect.play(board)
+
+
 class LearningPlayer(Player):
     def __init__(self, id_, first):
         super(LearningPlayer, self).__init__(id_)
@@ -345,7 +359,8 @@ def main():
     # p2 = OrderPlayer(2)
     # p2 = RandomPlayer(2)
     # p2 = LearningPlayer(2, False)
-    p2 = PerfectPlayer(2, False)
+    # p2 = PerfectPlayer(2, False)
+    p2 = ImperfectPlayer(2, False)
     game = Game(p1, p2)
     proc = Processor(game)
     proc.run()
