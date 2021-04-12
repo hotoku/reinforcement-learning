@@ -217,7 +217,7 @@ class LearningPlayer(Player):
                 vs.append((self.value[board], (i, j)))
                 board[i][j] = 0
         vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
-        prob = 1
+        prob = 0.95
         if np.random.uniform() < prob:
             index = 0
         else:
