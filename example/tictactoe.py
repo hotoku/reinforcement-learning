@@ -202,7 +202,8 @@ class LearningPlayer(Player):
     def finalize(self, winner, board):
         self.round += 1
         # alpha = 0.3 * np.power(0.9, int(self.round / 2000))
-        alpha = 0.3
+        # alpha = 0.3
+        alpha = 0.3 * (0.99 ** (self.round / 1000))
         if not self.history[-1] == board:
             self.history.append(board)
         h2 = list(reversed(self.history))
@@ -343,8 +344,8 @@ class Processor:
 
 @click.command()
 def main():
-    p1 = RandomPlayer(1)
-    # p1 = LearningPlayer(1)
+    # p1 = RandomPlayer(1)
+    p1 = LearningPlayer(1)
     # p1 = UserPlayer(1)
     # p1 = PerfectPlayer(1, True)
     # p2 = OrderPlayer(2)
