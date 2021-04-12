@@ -163,13 +163,14 @@ class PerfectPlayer(Player):
 
 
 class LearningPlayer(Player):
-    def __init__(self, id_):
+    def __init__(self, id_, first):
         super(LearningPlayer, self).__init__(id_)
         self.enemy = 1 if self.id == 2 else 1
         self.value = Value()
         self.init_value()
         self.history = []
         self.round = 0
+        self.first = first
 
     def init_value(self):
         board = Board()
@@ -207,12 +208,6 @@ class LearningPlayer(Player):
         if not self.history[-1] == board:
             self.history.append(board)
         h2 = list(reversed(self.history))
-        if winner == self.id:
-            self.value[board] = 1
-        elif winner == self.enemy:
-            self.value[board] = -1
-        else:
-            self.value[board] = 0
         for b1, b2 in zip(h2[:-1], h2[1:]):
             self.value[b2] += alpha * (self.value[b1] - self.value[b2])
 
@@ -223,19 +218,19 @@ class LearningPlayer(Player):
                 board[i][j] = self.id
                 vs.append((self.value[board], (i, j)))
                 board[i][j] = 0
-        vs2 = sorted(vs, key=lambda x: x[0], reverse=True)
-        prob = 0.95 if self.round < 20000 else 1
+        vs2 = sorted(vs, key=lambda x: x[0], reverse=self.first)
+        prob = 0.95
         if np.random.uniform() < prob:
             index = 0
         else:
             indices = np.arange(len(vs2))
             index = np.random.choice(indices)
         i, j = vs2[index][1]
-        ret = board.clone()
-        ret[i][j] = self.id
+        copied = board.clone()
+        copied[i][j] = self.id
 
         self.history.append(board.clone())
-        self.history.append(ret)
+        self.history.append(copied)
 
         pos = ij2pos(i, j)
         return Move(self.id, pos)
@@ -345,12 +340,12 @@ class Processor:
 @click.command()
 def main():
     # p1 = RandomPlayer(1)
-    p1 = LearningPlayer(1)
+    p1 = LearningPlayer(1, True)
     # p1 = UserPlayer(1)
     # p1 = PerfectPlayer(1, True)
     # p2 = OrderPlayer(2)
     # p2 = RandomPlayer(2)
-    # p2 = LearningPlayer(2)
+    # p2 = LearningPlayer(2, False)
     p2 = PerfectPlayer(2, False)
     game = Game(p1, p2)
     proc = Processor(game)
